@@ -1,0 +1,57 @@
+@startuml
+
+participant Gateway as "API Gateway"
+participant MQ as "Message Broker"
+participant OrderSvc as "OrderTrackingService"
+participant DB as "Database"
+
+== Create Order ==
+Gateway -> OrderSvc : POST /orders
+OrderSvc -> DB : INSERT order, status=Pending
+OrderSvc -> MQ : OrderCreated(orderId)
+
+== Payment Reservation ==
+alt 
+    MQ -> OrderSvc : PaymentReserved(orderId)
+    OrderSvc -> DB : UPDATE order SET status=PaymentReserved
+else 
+    MQ -> OrderSvc : PaymentFailed(orderId)
+    OrderSvc -> DB : UPDATE order SET status=PaymentFailed
+end
+
+== Order Acceptance ==
+
+alt 
+    MQ -> OrderSvc : RestaurantAccepted(orderId)
+    OrderSvc -> DB : UPDATE order SET status=Accepted
+else 
+    MQ -> OrderSvc : RestaurantRejected(orderId)
+    OrderSvc -> DB : UPDATE order SET status=Cancelled
+end
+
+== Delivery Assigment ==
+
+MQ -> OrderSvc : DeliveryAssigned(orderId)
+OrderSvc -> DB : UPDATE order SET status=DeliveryAssigned
+
+== Order Ready ==
+
+MQ -> OrderSvc : RestaurantOrderReady(orderId)
+OrderSvc -> DB : UPDATE order SET status=Ready
+
+== Payment Execution ==
+
+MQ -> OrderSvc : PaymentSucceeded(orderId)
+OrderSvc -> DB : UPDATE order SET status=PaymentSucceeded
+
+== Delivery ==
+
+MQ -> OrderSvc : DeliveryStarted(orderId)
+OrderSvc -> DB : UPDATE order SET status=Delivering
+
+== Order Completion ==
+
+MQ -> OrderSvc : DeliveryCompleted(orderId)
+OrderSvc -> DB : UPDATE order SET status=Completed
+
+@enduml

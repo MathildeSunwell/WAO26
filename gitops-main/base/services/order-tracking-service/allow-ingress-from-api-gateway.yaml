@@ -1,0 +1,24 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-api-gateway
+  namespace: order-tracking-service
+spec:
+  podSelector:
+    matchLabels:
+      app: order-tracking-service
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from: # API Gateway
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: api-gateway
+          podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+  

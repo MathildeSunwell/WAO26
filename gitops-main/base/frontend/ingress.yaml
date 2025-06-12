@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: swwao-courses.orbit.au.dk
+      http:
+        paths:
+          - path: /grp-7/frontend
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000

@@ -1,0 +1,115 @@
+:root {
+  --primary-color: #2c3e50; /* header/nav background, headings */
+  --accent-color: #e67e22; /* buttons, links */
+  --bg-color: #ecf0f1; /* page background */
+  --card-bg: #ffffff; /* main “card” background */
+  --text-color: #333333; /* body text */
+  --border-radius: 4px; /* global rounding */
+  --font-family: "Roboto", sans-serif;
+}
+
+/* 2) Reset & Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+  font-family: var(--font-family);
+  background: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+/* 3) Links */
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* 4) Header & Nav */
+nav {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 16px;
+}
+nav a {
+  color: #fff;
+  margin-right: 16px;
+  font-weight: 500;
+}
+
+/* 5) Main container */
+main {
+  max-width: 800px;
+  margin: 32px auto;
+  padding: 24px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 6) Headings */
+h1,
+h2 {
+  color: var(--primary-color);
+  margin-bottom: 16px;
+}
+
+/* 7) Forms */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+input,
+select,
+textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  font-family: var(--font-family);
+}
+button {
+  padding: 10px 16px;
+  background: var(--accent-color);
+  border: none;
+  border-radius: var(--border-radius);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+button:hover {
+  opacity: 0.9;
+}
+
+/* 8) Lists */
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* 9) Utility */
+.text-center {
+  text-align: center;
+}
+.mt-1 {
+  margin-top: 1rem;
+}
+.mt-2 {
+  margin-top: 2rem;
+}

@@ -1,0 +1,53 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Docker-related
+docker-compose.override.yml
+.env.docker
+
+# JSON‐Server stub database (if you want to ignore)
+stub-db.json
+
+# Coverage directory
+coverage/
+
+# Optional npm cache
+.npm
+
+# Yarn cache
+.yarn-cache/
+.yarn/
+
+# Misc
+*.swp
+*.swo

@@ -1,0 +1,34 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-rabbitmq-mongodb
+  namespace: delivery-service
+spec:
+  podSelector:
+    matchLabels: 
+      app: delivery-service
+  policyTypes:
+  - Egress
+
+  egress:
+    - to: # RabbitMQ
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: rabbitmq
+        podSelector:
+          matchLabels:
+            app: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5672
+
+    - to: # MongoDB
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: mongodb
+        podSelector:
+          matchLabels:
+            app: mongodb
+      ports:
+        - protocol: TCP
+          port: 27017

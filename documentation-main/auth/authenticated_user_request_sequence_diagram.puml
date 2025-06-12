@@ -1,0 +1,26 @@
+@startuml "OAuth 2.0 API Request - Sequence Diagram (User Logged In)"
+
+actor User
+participant "Frontend App" as Frontend
+participant "API Gateway" as Gateway
+participant "OAuth Provider" as OAuth
+participant "Order Tracking Service" as Order
+
+== Authenticated User Makes API Request ==
+User -> Frontend : Clicks "Place Order"
+Frontend -> Gateway : POST /orders (Authorization: Bearer token)
+
+== Token Validation ==
+Gateway -> OAuth : Validate token via JWKS or Introspection
+OAuth --> Gateway : Token is valid (includes scopes/claims)
+
+== Authorization Check ==
+alt If token is valid and has scope "order:create"
+    Gateway -> Order : Forward request with identity headers
+    Order --> Gateway : Order confirmation response
+    Gateway --> Frontend : Return order confirmation
+else Token invalid or insufficient scope
+    Gateway --> Frontend : 403 Forbidden
+end
+
+@enduml

@@ -1,0 +1,61 @@
+# Build results
+bin/
+obj/
+[Ll]og/
+*.log
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Visual Studio
+.vs/
+.vscode/
+.history/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Test results
+TestResult*/
+*.VisualState.xml
+*.coverage
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# DotCover
+*.dotCover
+
+# Local config
+*.scc
+*.vspscc
+*.vssscc
+*.dbmdl
+*.pfx
+*.publishsettings
+*.pubxml
+*.publishproj
+PublishScripts/
+
+# Package management
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# Node modules (if applicable)
+node_modules/
+wwwroot/node_modules/
+
+# OS-specific
+*.DS_Store
+Thumbs.db

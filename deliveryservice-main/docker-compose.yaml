@@ -1,0 +1,20 @@
+services:
+  delivery:
+    build: .
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB_NAME: delivery-service
+      MONGODB_USER: root
+      MONGODB_PASSWORD: admin
+      RABBITMQ_URI: rabbitmq
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin
+      LOG_PRETTY: true
+      LOG_LEVEL: debug
+    ports:
+      - "3000:3000"
+
+networks:
+  default:
+    name: local-dev-net
+    external: true

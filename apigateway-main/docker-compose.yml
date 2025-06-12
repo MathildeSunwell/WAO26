@@ -1,0 +1,25 @@
+services:
+  api-gateway:
+    build:
+      context: .
+    volumes:
+      - ./config/services.json:/etc/config/services.json:ro
+    ports:
+      - "8080:8080"
+    environment:
+      # your OAuth and session secrets
+      SESSION_SECRET: localsecret
+      GOOGLE_CLIENT_ID: 1033853639507-tfke0q2htjg2552a2stc0j1g3tsllnd3.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: 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
+      NODE_ENV: development
+      BASE_PATH: /grp-7/api
+    depends_on:
+      - order-service
+
+  order-service:
+    image: vimagick/json-server
+    volumes:
+      - ./mocks/order-service/db.json:/data/db.json:ro
+    command: -p 3001 -w db.json
+    ports:
+      - "3001:3001"

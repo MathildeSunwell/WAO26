@@ -1,0 +1,30 @@
+# Ignore PlantUML generated diagram images
+*.png
+*.svg
+*.eps
+*.pdf
+
+# Ignore output directories commonly used for documentation builds
+/site/
+/build/
+/output/
+
+# Ignore temporary files from editors and IDEs
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.DS_Store
+Thumbs.db
+
+# Ignore JetBrains IDE settings directory
+.idea/
+
+# Ignore all files in the .vscode directory
+.vscode/*
+
+# Include specific files in the .vscode directory
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json

@@ -1,0 +1,70 @@
+@startuml "Pizza Ordering Saga"
+
+title Order Placement Saga (Choreographed & Partially Orchestrated)
+
+start
+:Customer places order;
+:Order Service creates order\n(status = Pending);
+:Publish "OrderCreated";
+
+fork
+:Payment Service receives "OrderCreated";
+if (Payment Reserved?) then (yes)
+    :Charge customer\n(status = Reserved);
+    :Publish "PaymentReserved" event;
+else (no)
+    :Publish "PaymentFailed" event;
+    stop
+endif
+
+fork again 
+    :Restaurant Service receives "OrderCreated";
+    :Saves order\n(status = Pending);
+
+fork again 
+    :Delivery Service receives "OrderCreated";
+    :Saves order\n(status = Pending);
+fork end
+
+    :RestaurantService receives "PaymentReserved";
+    if (Accept order?) then (yes)
+        :Restaurant accepts order\n(status = Accepted);
+        :Publish "RestaurantAccepted" event;
+        :Start preparing order\n(status = Preparing);
+    else (no)
+        :Restaurant rejects order\n(status = Rejected);
+        :Publish "RestaurantRejected" event;
+        :Order Service cancels order\n(status = Cancelled);
+        stop
+    endif
+
+fork
+    :Delivery Service receives "RestaurantAccepted";
+    :Schedule delivery\n(status = Assigned);
+    :Publish "DeliveryAssigned" event;
+end fork
+
+:Restaurant Service completes preparation\n(status = Ready);
+:Publish "RestaurantOrderReady";
+
+fork
+    :Delivery Service picks up order;
+    :Publish "DeliveryStarted";
+
+fork
+    :Payment Service receives "DeliveryStarted";
+    :Payment Service executes payment\n(status = Succeeded);
+    :Publish "PaymentSucceeded" event;
+
+fork again
+    :Delivery Service delivers order;
+    :Delivery completed\n(status = Delivered);
+    :Publish "DeliveryCompleted" event;
+end fork
+
+:Order Service receives "DeliveryCompleted";
+:Order completed\n(status = Completed);
+
+stop
+
+@enduml

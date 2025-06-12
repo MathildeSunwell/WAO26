@@ -1,0 +1,43 @@
+@startuml
+
+participant MQ as "RabbitMQ"
+participant DeliverySvc as "DeliveryService"
+participant DB
+
+== Create Order ==
+MQ -> DeliverySvc : OrderCreated(orderId)
+DeliverySvc -> DB : INSERT order, status=Pending
+
+== Payment or Restaurant Cancel Order ==
+alt Payment Failed
+        MQ -> DeliverySvc : PaymentFailed(orderId)
+        
+else RestaurantRejected
+        MQ -> DeliverySvc : RestaurantRejected(orderId)
+
+end
+DeliverySvc -> DB : UPDATE order SET status=Cancelled
+DeliverySvc -> MQ : DeliveryCancelled(orderId)
+
+== Assign Delivery ==
+' 1. OrderAccepted
+MQ -> DeliverySvc : OrderAccepted(orderId)
+
+' 2. DeliveryService persists, assigns driver & naive ETA
+DeliverySvc -> DeliverySvc : assignDriver(orderId)
+DeliverySvc -> DeliverySvc : assignETA(orderId)
+DeliverySvc -> DB : INSERT delivery status=Assigned/Unassigned, driverId, etaMinutes
+DeliverySvc -> MQ : DeliveryAssigned(orderId, driverId, etaMinutes)
+
+== Deliver Order ==
+' 3. Simulate “Picked Up”
+MQ -> DeliverySvc : RestaurantOrderReady(orderId)
+DeliverySvc -> DB : UPDATE delivery SET status=PickedUp
+DeliverySvc -> MQ : DeliveryStarted(orderId)
+
+' 4. Simulate “Delivered”
+DeliverySvc -> DeliverySvc : deliverOrder(orderId)
+DeliverySvc -> DB : UPDATE delivery SET status=Delivered
+DeliverySvc -> MQ : DeliveryCompleted(orderId)
+
+@enduml

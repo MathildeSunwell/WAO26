@@ -1,0 +1,77 @@
+services:
+  mongodb:
+    image: mongo:8.0.9
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express:1.0.2-20-alpine3.19
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_MONGODB_URL: mongodb://root:admin@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - "8081:8081"
+    volumes:
+      - mongo_data:/data/db
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: Y
+      SA_USER: sa
+      MSSQL_SA_PASSWORD: "Admin1234!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  sqlpad:
+    image: sqlpad/sqlpad:latest
+    restart: unless-stopped
+    depends_on:
+      - sqlserver
+    environment:
+      # UI login
+      SQLPAD_ADMIN: admin
+      SQLPAD_ADMIN_PASSWORD: admin
+      # Pre-configured SQL Server connection
+      SQLPAD_CONNECTIONS__0__name: "SQLServer"
+      SQLPAD_CONNECTIONS__0__driver: sqlserver
+      SQLPAD_CONNECTIONS__0__host: sqlserver
+      SQLPAD_CONNECTIONS__0__port: 1433
+      SQLPAD_CONNECTIONS__0__database: master
+      SQLPAD_CONNECTIONS__0__username: sa
+      SQLPAD_CONNECTIONS__0__password: "Admin1234!"
+    ports:
+      - "4000:3000"
+    volumes:
+      - sqlpad_data:/var/lib/sqlpad
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    restart: unless-stopped
+    volumes:
+      - ./definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    ports:
+      - "5672:5672" # AMQP
+      - "25672:15672" # management UI. Different from default to avoid conflict browser auth caching from cluster
+
+volumes:
+  mongo_data:
+  sqlserver_data:
+  sqlpad_data:
+
+networks:
+  default:
+    name: local-dev-net

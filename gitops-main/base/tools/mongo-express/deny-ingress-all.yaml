@@ -1,0 +1,9 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-ingress-all
+  namespace: mongo-express
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

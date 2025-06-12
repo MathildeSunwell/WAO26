@@ -1,0 +1,36 @@
+@startuml 'System Overview'
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "Customer ordering pizza")
+
+System_Ext(auth, "OAuth Provider", "OAuth2/OpenID Connect")
+
+System_Boundary(c1, "Pizza Ordering System") {
+    Container(frontend, "Frontend App", "Next.js", "User-facing web or mobile application")
+
+    Container(gateway, "API Gateway", "Node.js", "Exposes REST APIs to external clients")
+
+    ContainerDb(rabbitmq, "Message Broker", "RabbitMQ", "Async event-based communication")
+
+    Container(orderService, "Order Tracking Service", ".NET, SQL", "Manages orders lifecycle")
+    Container(restaurantService, "Restaurant Service", "Node.js, MongoDB", "Handles restaurant order processing")
+    Container(paymentService, "Payment Service", ".NET, SQL", "Processes payments & refunds")
+    Container(deliveryService, "Delivery Service", "Node.js, MongoDB", "Manages delivery scheduling & status")
+}
+
+' External relations
+Rel(user, frontend, "Uses", "HTTPS/REST")
+Rel(frontend, gateway, "Interacts with", "HTTPS/REST")
+Rel(frontend, auth, "Requests tokens", "OAuth2/OIDC")
+Rel_R(gateway, auth, "Authenticates requests", "OAuth2/OIDC")
+
+' API Gateway to Services (sync calls)
+Rel_D(gateway, orderService, "Forwards requests", "REST")
+
+' Async communication via RabbitMQ
+Rel_D(orderService, rabbitmq, "Publishes OrderCreated event")
+Rel_U(restaurantService, rabbitmq, "Publishes OrderAccepted/Rejected/Ready events\nConsumes OrderCreated events")
+Rel_L(paymentService, rabbitmq, "Publishes PaymentSucceeded/Failed events\nConsumes OrderAccepted events")
+Rel_R(deliveryService, rabbitmq, "Publishes DeliveryScheduled/Completed events\nConsumes PaymentSucceeded events")
+
+@enduml

@@ -1,0 +1,30 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-restaurant-and-delivery
+  namespace: mongodb
+spec:
+  podSelector:
+    matchLabels: 
+      app: mongodb
+  policyTypes:
+  - Ingress
+
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: restaurant-service
+          podSelector:
+            matchLabels:
+              app: restaurant-service
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: delivery-service
+          podSelector:
+            matchLabels:
+              app: delivery-service
+      ports:
+        - protocol: TCP
+          port: 27017
+  

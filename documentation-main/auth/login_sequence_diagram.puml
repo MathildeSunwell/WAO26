@@ -1,0 +1,28 @@
+@startuml "OAuth 2.0 Login Flow - Sequence Diagram"
+
+actor User
+participant "Frontend App" as Frontend
+participant "OAuth Provider" as OAuth
+participant "API Gateway" as Gateway
+participant "Microservice" as Service
+
+== Authentication ==
+User -> Frontend : Access Login Page
+Frontend -> OAuth : Redirect to /authorize
+User -> OAuth : Authenticate (username/password)
+OAuth --> User : Consent Page
+User -> OAuth : Grants consent
+OAuth --> Frontend : Redirect with Authorization Code
+
+== Token Exchange ==
+Frontend -> OAuth : POST /token (with code)
+OAuth --> Frontend : Access Token + ID Token
+
+== API Access ==
+Frontend -> Gateway : API Request (Authorization: Bearer token)
+Gateway -> OAuth : Validate Token (JWKS or introspect)
+Gateway -> Service : Forward request with identity headers
+Service --> Gateway : Response
+Gateway --> Frontend : API response
+
+@enduml

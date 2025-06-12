@@ -1,0 +1,50 @@
+image: node:22
+
+stages:
+  - build
+  - build-image
+  - deployment
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: never
+    - when: always
+
+build-image:
+  image: docker:latest
+  stage: build-image
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -f Dockerfile -t $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG -t $CI_REGISTRY_IMAGE:latest .
+    - docker push --all-tags $CI_REGISTRY_IMAGE
+  rules:
+    - if: "$CI_COMMIT_TAG"
+
+deployment:
+  stage: deployment
+  image: bitnami/git:latest
+  before_script:
+    - git config --global user.email "ci@example.com"
+    - git config --global user.name "GitLab CI"
+    - apt-get update && apt-get install -y curl tar gzip
+    - curl -L https://github.com/mikefarah/yq/releases/download/v4.33.1/yq_linux_amd64.tar.gz -o yq.tar.gz
+    - tar -xzf yq.tar.gz
+    - mv yq_linux_amd64 /usr/bin/yq
+  script:
+    - git clone https://$GITOPS_USERNAME:$GITOPS_PASSWORD@gitlab.au.dk/swwao/f2025/exams-projects/Group-7/gitops.git
+    - cd gitops/base/services/restaurant-service
+    - yq e -i '.spec.template.spec.containers[0].image = "registry.gitlab.au.dk/swwao/f2025/exams-projects/group-7/frontend:'"$CI_COMMIT_TAG"'"' deployment.yaml
+    - git add deployment.yaml
+    - git commit -m "Update image to $CI_COMMIT_TAG"
+    - git push origin main
+  rules:
+    - if: "$CI_COMMIT_TAG"

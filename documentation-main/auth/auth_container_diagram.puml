@@ -1,0 +1,31 @@
+@startuml "OAuth 2.0 + API Gateway Flow"
+
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "Pizza customer")
+
+System_Ext(auth, "OAuth2/OIDC Provider", "Handles login, token issuance")
+
+System_Boundary(gateway, "API Gateway") {
+  Container(apiGateway, "API Gateway", "Node.js", "Validates access tokens and enforces scopes")
+}
+
+System_Boundary(frontend, "Frontend App") {
+  Container(frontendApp, "Frontend", "", "Sends access tokens with API requests")
+}
+
+System_Boundary(backend, "Microservices") {
+  Container(orderSvc, "Order Tracking Service", ".NET", "Handles orders")
+}
+
+' User login and token flow
+Rel_D(user, frontendApp, "Uses")
+Rel_L(frontendApp, auth, "Redirects to for login")
+Rel_R(auth, frontendApp, "Returns Access + ID Token")
+
+' API calls
+Rel_D(frontendApp, apiGateway, "Sends API requests with Access Token", "HTTPS")
+Rel_U(apiGateway, auth, "Fetches JWKS / Introspects token", "Optional")
+Rel_D(apiGateway, orderSvc, "Routes request if token valid", "Includes claims in headers")
+
+@enduml

@@ -1,0 +1,100 @@
+﻿@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class OrderTrackingService {
+  **Exchange**: 
+  events.topic
+  --
+  **Queue**: 
+  order-queue
+  order-retry-queue
+  order-dlq-queue
+  --
+  **Publishes**:
+  order.created
+  --
+  **Consumes**:
+    restaurant.rejected
+    restaurant.accepted
+    restaurant.order_ready
+    restaurant.cancelled
+    payment.reserved
+    payment.failed
+    payment.succeeded
+    payment.cancelled
+    delivery.assigned
+    delivery.started
+    delivery.completed
+    delivery.cancelled
+}
+
+class PaymentService {
+  **Exchange**: 
+  events.topic
+  --
+  **Queue**: 
+  payment-queue
+  payment-retry-queue
+  payment-dlq-queue
+  --
+  **Publishes**:
+    payment.reserved
+    payment.failed
+    payment.succeeded
+    payment.cancelled
+  --
+  **Consumes**:
+    order.created
+    delivery.started
+}
+
+class RestaurantService {
+  **Exchange**: 
+  events.topic
+  --
+  **Queue**: 
+  restaurant-queue
+  restaurant-retry-queue
+  restaurant-dlq-queue
+  --
+  **Publishes**:
+    restaurant.accepted
+    restaurant.rejected
+    restaurant.order_ready
+  --
+  **Consumes**:
+    order.created
+    payment.reserved
+    payment.failed
+}
+
+class DeliveryService {
+  **Exchange**: 
+  events.topic
+  --
+  **Queue**: 
+  delivery-queue
+  delivery-retry-queue
+  delivery-dlq-queue
+  --
+  **Publishes**:
+    delivery.assigned
+    delivery.unassigned
+    delivery.started
+    delivery.completed
+    delivery.cancelled
+  --
+  **Consumes**:
+    order.created
+    payment.failed
+    restaurant.accepted
+    restaurant.rejected
+    restaurant.order_ready
+}
+
+OrderTrackingService -- PaymentService
+PaymentService -- RestaurantService
+RestaurantService -- DeliveryService
+@enduml

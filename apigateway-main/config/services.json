@@ -1,0 +1,3 @@
+{
+  "/orders": "http://order-service:3001/orders"
+}

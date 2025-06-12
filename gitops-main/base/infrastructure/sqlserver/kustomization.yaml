@@ -1,0 +1,10 @@
+resources:
+  - statefulset.yaml
+  - service.yaml
+  - secret.yaml
+  - order-db-secret.yaml
+  - payment-db-secret.yaml
+  - namespace.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true

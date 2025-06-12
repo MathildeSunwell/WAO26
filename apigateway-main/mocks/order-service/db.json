@@ -1,0 +1,25 @@
+{
+  "orders": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "orderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "customerAddress": "123 Main St",
+      "totalPrice": 59.97,
+      "orderStatus": "Pending",
+      "paymentStatus": "Pending",
+      "restaurantStatus": "Pending",
+      "deliveryStatus": "Pending",
+      "createTime": "2025-05-25T14:30:00Z",
+      "lastUpdated": "2025-05-25T14:30:00Z",
+      "items": [
+        {
+          "itemId": "b1a7f15e-1234-4c2a-9fbd-2fae6f8d1234",
+          "productName": "Widget",
+          "size": "M",
+          "quantity": 2,
+          "price": 19.99
+        }
+      ]
+    }
+  ]
+}

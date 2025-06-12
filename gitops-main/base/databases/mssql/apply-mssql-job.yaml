@@ -1,0 +1,84 @@
+﻿apiVersion: batch/v1
+kind: Job
+metadata:
+  name: apply-mssql-job
+  namespace: sqlserver
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded, BeforeHookCreation
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: apply-sql
+          image: mcr.microsoft.com/mssql-tools
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              apt-get update && apt-get install -y gettext
+              
+              trap 'CODE=$?; echo "Sleeping 5 minutes before pod shutdown (exit code $CODE)..."; sleep 300' EXIT
+              
+              for db in "Orders ORDER_DB_USER ORDER_DB_PASSWORD" "Payments PAYMENT_DB_USER PAYMENT_DB_PASSWORD"; do
+                set -- $db
+                DB_NAME=$1
+                DB_USER_VAR=$2
+                DB_PASSWORD_VAR=$3
+              
+                DB_USER=${!DB_USER_VAR}
+                DB_PASSWORD=${!DB_PASSWORD_VAR}
+              
+              echo "DEBUG: Setting up database $DB_NAME with user $DB_USER"
+              
+              export DB_NAME DB_USER DB_PASSWORD
+              envsubst < /scripts/setup-mssql-db.sql > /tmp/setup-db-${DB_NAME}.sql
+              echo "DEBUG: Running sqlcmd on /tmp/setup-db-${DB_NAME}.sql"
+              
+                /opt/mssql-tools/bin/sqlcmd \
+                  -S tcp:$DB_HOST,$DB_PORT \
+                  -U $SA_USER -P "$SA_PASSWORD" \
+                  -b \
+                  -i "/tmp/setup-db-${DB_NAME}.sql" || {
+                  echo "sqlcmd failed for $DB_NAME. See /tmp/${DB_NAME}_output.log";
+                  cat "/tmp/${DB_NAME}_output.log";
+                  exit 1;
+                }     
+              done
+          env:
+            - name: DB_HOST
+              value: sqlserver.sqlserver.svc.cluster.local
+            - name: DB_PORT
+              value: "1433"
+            - name: SA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver
+                  key: SA_USER
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver
+                  key: SA_PASSWORD
+            - name: SETUP_SCRIPT
+              value: /scripts/setup-mssql-db.sql
+          envFrom:
+            - secretRef:
+                name: order-db-secret
+            - secretRef:
+                name: payment-db-secret
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: db-scripts
+              mountPath: /scripts
+      volumes:
+        - name: db-scripts
+          configMap:
+            name: setup-mssql-db

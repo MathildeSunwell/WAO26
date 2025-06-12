@@ -1,0 +1,33 @@
+﻿@startuml PaymentService
+
+title PaymentService
+
+participant "Message Broker" as MQ
+participant "Payment Service" as PS
+database "Payment DB" as DB
+
+== Initial Payment Reservation ==
+
+
+MQ -> PS : Receive OrderCreated(OrderId, Amount)
+PS -> DB : INSERT Payment\n(OrderId, Amount, Status = Reserved/Failed, CreatedAt)
+alt Payment success
+    PS -> MQ : Publish PaymentReserved(OrderId)
+else Payment failure
+    PS -> MQ : Publish PaymentFailed(OrderId)
+end
+
+== Restaurant Cancel Order ==
+
+    MQ -> PS : Receive RestaurantRejected(OrderId)
+    PS -> DB : UPDATE payment(orderId, status = Cancelled)
+    PS -> MQ : Publish PaymentCancelled(OrderId)
+
+
+== Final Payment Execution  ==
+
+MQ -> PS : Recieve DeliveryStarted(OrderId)
+PS -> DB : UPDATE payment(orderId, status = Succeeded)
+PS -> MQ : Publish PaymentSucceeded(OrderId)
+
+@enduml

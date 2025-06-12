@@ -1,0 +1,67 @@
+@startuml "ER Diagram - Pizza Ordering System"
+' Entity Relationship Diagram for service databases
+
+entity "Order" as order {
+  * Id : GUID
+  --
+  OrderId : GUID
+  OrderStatus : string
+  PaymentStatus : string
+  RestaurantStatus : string
+  DeliveryStatus : string
+  CreateTime : datetime
+  LastUpdated : datetime
+  CorrelationId : GUID
+}
+
+entity "Payment" as payment {
+  * PaymentId : GUID
+  --
+  OrderId : GUID
+  Amount : decimal
+  Currency : string
+  Status : string
+  CreateTime : datetime
+  LastUpdated : datetime
+  CorrelationId : GUID
+}
+
+entity "Order" as rest {
+  * _id : GUID
+  --
+  OrderId : GUID
+  OrderStatus : string
+  EstimatedPrepTime : int
+  CreatedTime : datetime
+  LastUpdated : datetime
+  CorrelationId : GUID
+  OrderItems : OrderItem[]
+}
+
+entity "OrderItem" as item {
+  * ItemId : GUID
+  --
+  OrderId : GUID
+  ProductName : string
+  Quantity : int
+  Price : decimal
+}
+
+entity "Delivery" as delivery {
+  * DeliveryId : GUID
+  --
+  OrderId : GUID
+  CustomerAddress : string
+  DriverId : GUID
+  PickupTime : datetime
+  DropoffTime : datetime
+  Status : string
+  CreateTime : datetime
+  LastUpdated : datetime
+  CorrelationId : GUID
+}
+
+' Relationships
+rest ||--o{ item : contains
+
+@enduml

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restaurant-service-config
+  namespace: restaurant-service
+data:
+  RabbitMq__HostName: "rabbitmq.rabbitmq.svc.cluster.local"
+  RabbitMq__Port: "5672"

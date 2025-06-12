@@ -1,0 +1,18 @@
+﻿# OS & Editors
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# GitOps / Argo CD
+*.local.yaml
+
+# Kubernetes/Helm/Kustomize
+*.tgz
+charts/**/charts/
+**/values.local*.yaml
+kustomize.out/

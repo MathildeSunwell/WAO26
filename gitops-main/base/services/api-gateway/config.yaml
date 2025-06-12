@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: api-gateway
+data:
+  services.json: |
+    {
+      "/orders": "http://order-tracking-service.order-tracking-service.svc.cluster.local:8080/api/orders"
+    }

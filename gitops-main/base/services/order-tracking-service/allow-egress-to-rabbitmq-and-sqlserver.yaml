@@ -1,0 +1,26 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-rabbitmq-sqlserver
+  namespace: order-tracking-service
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  
+  egress:
+    - to: # RabbitMQ
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5672
+
+    - to: # SQL Server
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: sqlserver
+      ports:
+        - protocol: TCP
+          port: 1433

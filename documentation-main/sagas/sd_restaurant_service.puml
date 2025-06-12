@@ -1,0 +1,36 @@
+@startuml
+
+participant MQ as "Message Broker"
+participant RestSvc as "RestaurantService"
+participant DB as "Database"
+
+== Create Order ==
+MQ -> RestSvc : OrderCreated(orderId)
+RestSvc -> DB : INSERT order, status=Pending
+
+== Accept and Prepare Order ==
+alt 
+    MQ -> RestSvc : PaymentReserved(orderId)
+    RestSvc -> RestSvc : acceptOrder(orderId)
+    
+    alt true
+        RestSvc -> DB : UPDATE order SET status=Accepted
+        RestSvc -> MQ : RestaurantAccepted(orderId)
+        
+        RestSvc -> DB : UPDATE order SET status=Preparing
+            RestSvc -> RestSvc : prepareOrder(orderId)
+            
+            RestSvc -> DB : UPDATE order SET status=Ready
+            RestSvc -> MQ : RestaurantOrderReady(orderId)
+    else false
+        RestSvc -> DB : UPDATE order SET status=Rejected
+        RestSvc -> MQ : RestaurantRejected(orderId)
+    end
+  
+else 
+    MQ -> RestSvc : PaymentFailed(orderId)
+    RestSvc -> DB : UPDATE order SET status=Cancelled
+    RestSvc -> MQ : RestaurantCancelled(orderId)
+end
+
+@enduml

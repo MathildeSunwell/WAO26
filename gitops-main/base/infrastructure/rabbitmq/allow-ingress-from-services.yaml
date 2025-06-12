@@ -1,0 +1,41 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-from-services
+  namespace: rabbitmq
+spec:
+  podSelector:
+    matchLabels:
+      app: rabbitmq
+  policyTypes:
+    - Ingress
+      
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: order-tracking-service
+          podSelector:
+            matchLabels:
+              app: order-tracking-service
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: payment-service
+          podSelector:
+            matchLabels:
+              app: payment-service
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: restaurant-service
+          podSelector:
+            matchLabels:
+              app: restaurant-service
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: delivery-service
+          podSelector:
+            matchLabels:
+              app: delivery-service
+      ports:
+        - protocol: TCP
+          port: 5672

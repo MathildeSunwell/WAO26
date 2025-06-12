@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+  namespace: sqlserver
+spec:
+  revisionHistoryLimit: 2
+  serviceName: sqlserver
+  replicas: 1
+  selector:
+    matchLabels: { app: sqlserver }
+  template:
+    metadata:
+      labels: { app: sqlserver }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: mssql
+          image: mcr.microsoft.com/mssql/server:2019-latest
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+            limits:
+              cpu: "400m"
+              memory: "2Gi"
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver
+                  key: SA_USER
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver
+                  key: SA_PASSWORD
+          ports:
+            - containerPort: 1433
+          volumeMounts:
+            - name: mssqldata
+              mountPath: /var/opt/mssql
+  volumeClaimTemplates:
+    - metadata:
+        name: mssqldata
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 2Gi

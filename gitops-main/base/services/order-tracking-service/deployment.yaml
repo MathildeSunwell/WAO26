@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-tracking-service
+  namespace: order-tracking-service
+  labels:
+    app: order-tracking-service
+spec:
+  revisionHistoryLimit: 2
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-tracking-service
+  template:
+    metadata:
+      labels:
+        app: order-tracking-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      imagePullSecrets:
+        - name: gitlab-registry-secret
+      containers:
+        - name: order-tracking-service
+          image: registry.gitlab.au.dk/swwao/f2025/exams-projects/group-7/orderservice:v1.10
+          ports:
+            - containerPort: 8080
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          env:
+            # Configuration from ConfigMap
+            - name: RabbitMq__HostName
+              valueFrom:
+                configMapKeyRef:
+                  name: order-tracking-service-config
+                  key: RabbitMq__HostName
+            - name: RabbitMq__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: order-tracking-service-config
+                  key: RabbitMq__Port
+                  # Database connection string
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DefaultConnection
+            # Configuration from existing Secrets
+            - name: RabbitMq__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: userName
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: delivery-service-config
+  namespace: delivery-service
+data:
+  # MongoDB configuration
+  MONGODB_URI: "mongodb://mongodb.mongodb.svc.cluster.local"
+  MONGODB_USER: "root"
+  MONGODB_DB_NAME: "delivery-service"
+  # RabbitMQ configuration
+  RABBITMQ_URI: "rabbitmq.rabbitmq.svc.cluster.local"
+  RABBITMQ_USER: "user"

@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delivery-service
+  namespace: delivery-service
+  labels:
+    app: delivery-service
+spec:
+  revisionHistoryLimit: 2
+  replicas: 2
+  selector:
+    matchLabels:
+      app: delivery-service
+  template:
+    metadata:
+      labels:
+        app: delivery-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      imagePullSecrets:
+        - name: gitlab-registry-secret
+      containers:
+        - name: delivery-service
+          image: registry.gitlab.au.dk/swwao/f2025/exams-projects/group-7/deliveryservice:v1.10
+          ports:
+            - containerPort: 3000
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "30m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          env:
+            # Configuration from ConfigMap
+            - name: MONGODB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: delivery-service-config
+                  key: MONGODB_URI
+            - name: MONGODB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: delivery-service-config
+                  key: MONGODB_USER
+            - name: MONGODB_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: delivery-service-config
+                  key: MONGODB_DB_NAME
+            - name: RABBITMQ_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: delivery-service-config
+                  key: RABBITMQ_URI
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: delivery-service-config
+                  key: RABBITMQ_USER
+            # Configuration from existing Secrets
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: delivery-service
+                  key: mongodb-password
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: delivery-service
+                  key: rabbitmq-password

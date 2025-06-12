@@ -1,0 +1,51 @@
+@startuml "OAuth 2.0 Deployment Diagram"
+
+node "User Device" {
+  component "Frontend App" as Frontend
+}
+
+node "Internet" {
+  [OAuth Provider (OAuth2/OIDC)]
+}
+
+node "Kubernetes Cluster" {
+
+    [Ingress]
+    component "API Gateway"
+
+    component "OrderService"
+    database "OrderDB"
+
+    component "RestaurantService"
+    database "RestaurantDB"
+
+    component "PaymentService"
+    database "PaymentDB"
+
+    component "DeliveryService"
+    database "DeliveryDB"
+
+    component "RabbitMQ"
+  
+}
+
+' Flows
+Frontend --> "OAuth Provider (OAuth2/OIDC)"
+Frontend --> "Ingress"
+"Ingress" --> "API Gateway"
+"API Gateway" --> "OAuth Provider (OAuth2/OIDC)"
+
+"API Gateway" --> "OrderService"
+"OrderService" --> "OrderDB"
+
+"OrderService" -U-> RabbitMQ
+"RestaurantService" -U-> RabbitMQ 
+"RestaurantService" --> "RestaurantDB"
+
+"PaymentService" -U-> RabbitMQ
+"PaymentService" --> "PaymentDB"
+
+"DeliveryService" --> RabbitMQ
+"DeliveryService" --> "DeliveryDB"
+
+@enduml
