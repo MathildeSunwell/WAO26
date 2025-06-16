@@ -1,6 +1,4 @@
-﻿# Allow payment service to communicate ONLY with its required dependencies
-# This implements the principle of least privilege - only allow what's absolutely necessary
-apiVersion: networking.k8s.io/v1
+﻿apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-rabbitmq-sqlserver
@@ -11,18 +9,23 @@ spec:
   - Egress
 
   egress:
-    - to: # Allow communication to RabbitMQ for message queuing
+    - to:
       - namespaceSelector:
           matchLabels:
-            kubernetes.io/metadata.name: rabbitmq # Target rabbitmq namespace
+            kubernetes.io/metadata.name: rabbitmq 
       ports:
         - protocol: TCP
-          port: 5672 # AMQP protocol port for RabbitMQ
+          port: 5672 
 
-    - to: # Allow communication to SQL Server for database operations
+    - to: 
       - namespaceSelector:
           matchLabels:
-            kubernetes.io/metadata.name: sqlserver # Target sqlserver namespace
+            kubernetes.io/metadata.name: sqlserver 
       ports:
         - protocol: TCP
           port: 1433 
+
+# TCP port 5672 - AMQP protocol port for RabbitMQ messaging
+# TCP port 1433 - Standard SQL Server port for database forbindelser
+
+# AMQP (Advanced Message Queuing Protocol) er en standard måde for applikationer at sende beskeder til hinanden på.

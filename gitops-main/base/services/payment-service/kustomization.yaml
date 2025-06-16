@@ -7,3 +7,5 @@ resources:
   - sealed-db-secret.yaml
   - sealed-rabbitmq-secret.yaml
 
+# En kustomization fil er en liste over alle YAML-filer der skal 
+# bruges sammen for at bygge en komplet Kubernetes applikation.

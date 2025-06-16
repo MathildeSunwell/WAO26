@@ -8,3 +8,6 @@ data:
     {
       "/orders": "http://order-tracking-service.order-tracking-service.svc.cluster.local:8080/api/orders"
     }
+
+# ConfigMap'en opretter en fil kaldet services.json med routing-information. 
+# Når API Gateway'en starter op, læser den denne fil for at vide hvordan den skal dirigere trafik.

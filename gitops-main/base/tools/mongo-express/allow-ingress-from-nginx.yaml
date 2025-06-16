@@ -19,3 +19,5 @@ spec:
         - protocol: TCP
           port: 8081
 
+# Nginx er en webserver der i dit Kubernetes cluster fungerer som Ingress Controller
+# Denne fil tillader indgående trafik til mongo-express fra nginx Ingress Controller

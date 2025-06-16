@@ -13,3 +13,7 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+
+# Denne service-fil opretter et internt endpoint for API Gateway systemet.
+# Den bruger ClusterIP, hvilket betyder at den kun er tilgængelig internt i Kubernetes clusteret.
+# Den lytter på port 8080 og dirigerer trafik til de pods der matcher labelen app: api-gateway.

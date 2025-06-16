@@ -1,9 +1,13 @@
+# OAuth2 Proxy ArgoCD Application
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: oauth2-proxy
+
 ---
+
+# Implementerer Google OAuth login for hele applikationen
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -12,46 +16,60 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://oauth2-proxy.github.io/manifests
-    chart: oauth2-proxy
-    targetRevision: 7.12.9
+    repoURL: https://oauth2-proxy.github.io/manifests  
+    chart: oauth2-proxy                               
+    targetRevision: 7.12.9                           
     helm:
-      valuesObject:
+      valuesObject:                                   
+        # Ressource begrænsninger for OAuth2 Proxy
         resources:
           limits:
-            cpu: 100m
-            memory: 300Mi
+            cpu: 100m                                 
+            memory: 300Mi                             
           requests:
-            cpu: 100m
-            memory: 300Mi
+            cpu: 100m                                 
+            memory: 300Mi                             
+
+        # OAuth2 konfiguration
         config:
+          # Google OAuth credentials
           clientID: "1033853639507-tfke0q2htjg2552a2stc0j1g3tsllnd3.apps.googleusercontent.com"
           clientSecret: "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"
           cookieSecret: "964pyCsU2iCeuN4UssLEK/xtQSptjAzoaPNNn8URhf0="
+          
+          # OAuth2 Proxy konfigurationsfil
           configFile: |-
-            provider = "oidc"
-            oidc_issuer_url = "https://accounts.google.com"
-            redirect_url = "https://swwao-courses.orbit.au.dk/grp-7/oauth2/callback"
-            email_domains = [ "*" ]
-            cookie_secure = true
-            cookie_httponly = true
-            # tell proxy how to reach your frontend once authenticated
+            provider = "oidc"                                          # Brug OpenID Connect
+            oidc_issuer_url = "https://accounts.google.com"           # Google som identity provider
+            redirect_url = "https://swwao-courses.orbit.au.dk/grp-7/oauth2/callback"  # Hvor Google sender brugere tilbage
+            email_domains = [ "*" ]                                   # Tillad alle email-domæner
+            cookie_secure = true                                      # Sikre cookies (HTTPS only)
+            cookie_httponly = true                                    # Beskyt cookies mod JavaScript
+            # Efter login, videresend til frontend
             upstreams = [ "http://pizza-frontend.default.svc.cluster.local:3000" ]
-        # Turn on the built-in Ingress in the chart and lock everything behind oauth2
+
+        # Ingress konfiguration - gør OAuth2 proxy tilgængelig fra internettet
         ingress:
-          enabled: true
+          enabled: true                                
           hosts:
-            - swwao-courses.orbit.au.dk
+            - swwao-courses.orbit.au.dk                
           annotations:
-            kubernetes.io/ingress.class: nginx
+            kubernetes.io/ingress.class: nginx        
+            # OAuth2 integration med nginx - alle requests går gennem authentication
             nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.default.svc.cluster.local:4180/oauth2/auth"
             nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
             nginx.ingress.kubernetes.io/auth-response-headers: "x-auth-request-user,x-auth-request-email"
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: oauth2-proxy
+    namespace: oauth2-proxy                           # Deploy til oauth2-proxy namespace
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: true                                     
+      selfHeal: true                                  
+
+# Denne OAuth2 Proxy fungerer som "dørmand" for hele applikationen:
+# 1. Brugere besøger din app
+# 2. Nginx tjekker med OAuth2 Proxy om de er logget ind
+# 3. Hvis ikke, sendes de til Google login
+# 4. Efter succesfuld login får de adgang til frontend

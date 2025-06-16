@@ -6,3 +6,6 @@ metadata:
 data:
   RabbitMq__HostName: "rabbitmq.rabbitmq.svc.cluster.local"
   RabbitMq__Port: "5672"
+
+# Denne fil bruges til at konfigurere RabbitMQ for Payment Service.
+# Den specificerer værtsnavnet og porten for RabbitMQ-tjenesten, som Payment Service skal bruge for at kunne kommunikere med RabbitMQ.

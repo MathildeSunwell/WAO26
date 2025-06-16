@@ -1,7 +1,4 @@
-﻿# This is the "default deny" policy that blocks ALL traffic to and from payment-service pods
-# It serves as the foundation of our zero-trust security model - start with nothing allowed
-
-apiVersion: networking.k8s.io/v1
+﻿apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: deny-all
@@ -9,7 +6,8 @@ metadata:
 spec:
   podSelector: {} # Apply to all pods in the payment-service namespace
   policyTypes:
-    - Ingress  # Block all incoming traffic
-    - Egress   # Block all outgoing traffic
+    - Ingress  
+    - Egress   
   
-  # No ingress/egress rules defined = everything is denied by default
+
+

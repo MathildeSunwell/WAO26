@@ -7,26 +7,29 @@ metadata:
     app: payment-service            
 
 spec:
-  revisionHistoryLimit: 2          # Angiver hvor mange gamle versioner der skal gemmes
-  replicas: 2                      # Angiver hvor mange pods der skal køre samtidigt
+  revisionHistoryLimit: 2          
+  replicas: 2  
 
-  selector:                        # Denne Deployment styrer alle pods, der har app=payment-service som label
+# Denne Deployment styrer alle pods, der har app=payment-service som label
+  selector:                        
     matchLabels:
       app: payment-service
 
-  template:                        # Pod template – beskriver hvordan hver pod skal se ud
+# Pod template – beskriver hvordan hver pod skal se ud
+  template:                        
     metadata:
       labels:
-        app: payment-service       
+        app: payment-service    
 
+  # Security context for pod
     spec:
-      securityContext:             # Sikkerhed for hele pod’en
+      securityContext:             
         runAsNonRoot: true         
         runAsUser: 1001            
         runAsGroup: 1001           
-        fsGroup: 1001              # Angiver hvilken gruppe der ejer filsystemet i pod’en
+        fsGroup: 1001              
 
-      imagePullSecrets:            # Angiver hvorfra containerbilleder skal hentes
+      imagePullSecrets:            
         - name: gitlab-registry-secret
 
       containers:
@@ -36,14 +39,15 @@ spec:
           ports:
             - containerPort: 8080  
 
+          # Security context for container
           securityContext:                    
-            privileged: false                 # Containeren kører ikke i privileged mode
-            allowPrivilegeEscalation: false   # Forhindrer containeren i at opnå højere rettigheder
+            privileged: false                 
+            allowPrivilegeEscalation: false   
             capabilities:
               drop:
-                - ALL              # Fjerner alle ekstra rettigheder fra containeren
+                - ALL     # Fjerner alle ekstra rettigheder fra containeren
 
-          readinessProbe:          # Tjekker om appen (den .NET-applikation der kører inde i containeren) er klar til at modtage trafik
+          readinessProbe:          
             httpGet:
               path: /health/ready
               port: 8080
@@ -51,15 +55,16 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
 
-          livenessProbe:           # Tjekker om appen stadig lever
+          livenessProbe:           
             httpGet:
               path: /health/live
               port: 8080
             initialDelaySeconds: 15   
             periodSeconds: 20         
-            failureThreshold: 5       
-
-          resources:              # Ressourcebegrænsninger for containeren
+            failureThreshold: 5   
+                
+          # Ressourcebegrænsninger for containeren
+          resources:              
             requests:
               cpu: "30m"          # Minimum CPU pod’en forventer at bruge (30 millicores)
               memory: "64Mi"      # Minimum RAM den forventer

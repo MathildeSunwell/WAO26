@@ -1,56 +1,67 @@
 ﻿apiVersion: batch/v1
-kind: Job
+kind: Job                                    # Job kører én gang og stopper når opgaven er færdig
 metadata:
   name: apply-mssql-job
   namespace: sqlserver
   annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded, BeforeHookCreation
+    argocd.argoproj.io/hook: PostSync        
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded, BeforeHookCreation  
+
 spec:
-  backoffLimit: 3
+  backoffLimit: 3                            
   template:
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: OnFailure               
       containers:
         - name: apply-sql
-          image: mcr.microsoft.com/mssql-tools
-          command: ["/bin/bash", "-c"]
+          image: mcr.microsoft.com/mssql-tools 
+          command: ["/bin/bash", "-c"]        
           args:
             - |
+              # Installer gettext til envsubst kommando
               apt-get update && apt-get install -y gettext
               
+              # Opsæt trap til debugging - venter 5 min før shutdown
               trap 'CODE=$?; echo "Sleeping 5 minutes before pod shutdown (exit code $CODE)..."; sleep 300' EXIT
               
+              # Loop gennem hver database der skal oprettes: Orders og Payments
               for db in "Orders ORDER_DB_USER ORDER_DB_PASSWORD" "Payments PAYMENT_DB_USER PAYMENT_DB_PASSWORD"; do
-                set -- $db
-                DB_NAME=$1
-                DB_USER_VAR=$2
-                DB_PASSWORD_VAR=$3
+                set -- $db                   # Split strengen op i separate variabler
+                DB_NAME=$1                   # Database navn (Orders eller Payments)
+                DB_USER_VAR=$2               # Environment variabel navn for bruger
+                DB_PASSWORD_VAR=$3           # Environment variabel navn for password
               
+                # Hent faktiske værdier fra environment variabler
                 DB_USER=${!DB_USER_VAR}
                 DB_PASSWORD=${!DB_PASSWORD_VAR}
               
-              echo "DEBUG: Setting up database $DB_NAME with user $DB_USER"
+                echo "DEBUG: Setting up database $DB_NAME with user $DB_USER"
               
-              export DB_NAME DB_USER DB_PASSWORD
-              envsubst < /scripts/setup-mssql-db.sql > /tmp/setup-db-${DB_NAME}.sql
-              echo "DEBUG: Running sqlcmd on /tmp/setup-db-${DB_NAME}.sql"
+                # Eksporter variabler så envsubst kan bruge dem
+                export DB_NAME DB_USER DB_PASSWORD
+                # Erstat placeholders i SQL template med faktiske værdier
+                envsubst < /scripts/setup-mssql-db.sql > /tmp/setup-db-${DB_NAME}.sql
+                echo "DEBUG: Running sqlcmd on /tmp/setup-db-${DB_NAME}.sql"
               
+                # Kør SQL script mod SQL Server
                 /opt/mssql-tools/bin/sqlcmd \
-                  -S tcp:$DB_HOST,$DB_PORT \
-                  -U $SA_USER -P "$SA_PASSWORD" \
-                  -b \
-                  -i "/tmp/setup-db-${DB_NAME}.sql" || {
+                  -S tcp:$DB_HOST,$DB_PORT \  # Server adresse og port
+                  -U $SA_USER -P "$SA_PASSWORD" \  # Login som system administrator
+                  -b \                        # Stop ved fejl
+                  -i "/tmp/setup-db-${DB_NAME}.sql" || {  # Kør SQL fil
                   echo "sqlcmd failed for $DB_NAME. See /tmp/${DB_NAME}_output.log";
                   cat "/tmp/${DB_NAME}_output.log";
-                  exit 1;
+                  exit 1;                     # Exit med fejl hvis SQL fejler
                 }     
               done
+
           env:
+            # SQL Server forbindelses-info
             - name: DB_HOST
               value: sqlserver.sqlserver.svc.cluster.local
             - name: DB_PORT
               value: "1433"
+            # System administrator login fra secret
             - name: SA_USER
               valueFrom:
                 secretKeyRef:
@@ -63,11 +74,15 @@ spec:
                   key: SA_PASSWORD
             - name: SETUP_SCRIPT
               value: /scripts/setup-mssql-db.sql
+
+          # Hent alle environment variabler fra database secrets
           envFrom:
             - secretRef:
-                name: order-db-secret
+                name: order-db-secret        # ORDER_DB_USER og ORDER_DB_PASSWORD
             - secretRef:
-                name: payment-db-secret
+                name: payment-db-secret      # PAYMENT_DB_USER og PAYMENT_DB_PASSWORD
+
+          # Ressource begrænsninger
           resources:
             requests:
               cpu: "30m"
@@ -75,10 +90,16 @@ spec:
             limits:
               cpu: "100m"
               memory: "128Mi"
+
+          # Mount SQL scripts fra ConfigMap
           volumeMounts:
             - name: db-scripts
               mountPath: /scripts
+
       volumes:
         - name: db-scripts
           configMap:
-            name: setup-mssql-db
+            name: setup-mssql-db            
+
+# Denne Job fungerer som en "database installer" der kører automatisk efter SQL Server er startet.
+# Den opretter Orders og Payments databaser med deres respektive brugere og rettigheder.

@@ -4,7 +4,7 @@ metadata:
   name: mongo-express-ingress
   namespace: mongo-express
 spec:
-  ingressClassName: nginx
+  ingressClassName: nginx  # Bruker nginx Ingress Controller
   rules:
     - host: swwao-courses.orbit.au.dk
       http:
@@ -16,3 +16,8 @@ spec:
                 name: mongo-express
                 port:
                   number: 8081
+
+# Denne Ingress-fil opretter en offentlig adgang til mongo-express fra internettet.
+# Når nogen skriver https://swwao-courses.orbit.au.dk/grp-7/mongo-express i deres browser, 
+# dirigerer nginx dem til mongo-express servicen på port 8081.
+

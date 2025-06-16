@@ -11,7 +11,7 @@ spec:
     - Ingress
 
   ingress:
-    - from: # API Gateway
+    - from: 
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: api-gateway
@@ -21,4 +21,5 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-  
+
+# Tillader kun indgående trafik fra pods der matcher både namespace og label

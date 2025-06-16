@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal deployere Restaurant Service ressourcerne fra Git til Kubernetes.
+# Den peger på base/services/restaurant-service mappen hvor Restaurant Service ressourcerne ligger.

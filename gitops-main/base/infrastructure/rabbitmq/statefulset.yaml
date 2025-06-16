@@ -1,58 +1,69 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: StatefulSet                        # StatefulSet i stedet for Deployment for at bevare data
 metadata:
   name: rabbitmq
   namespace: rabbitmq
   labels:
     app: rabbitmq
+
 spec:
-  revisionHistoryLimit: 2
-  serviceName: rabbitmq
-  replicas: 1
+  revisionHistoryLimit: 2                
+  serviceName: rabbitmq                  
+  replicas: 1                            
   selector:
     matchLabels:
       app: rabbitmq
-  template:
+
+  template:                              
     metadata:
       labels:
         app: rabbitmq
     spec:
       containers:
         - name: rabbitmq
-          image: rabbitmq:3.12-management-alpine
+          image: rabbitmq:3.12-management-alpine  
+
+          # RabbitMQ konfiguration fra secrets
           env:
-            - name: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_DEFAULT_USER        
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
                   key: username
-            - name: RABBITMQ_DEFAULT_PASS
+            - name: RABBITMQ_DEFAULT_PASS        
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
                   key: password
-            - name: RABBITMQ_ERLANG_COOKIE
+            - name: RABBITMQ_ERLANG_COOKIE       
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
                   key: erlangCookie
+
+          # Ressource begrænsninger
           resources:
             requests:
-              memory: 300Mi
-              cpu: 100m
+              memory: 300Mi                      
+              cpu: 100m                          
             limits:
-              memory: 1Gi
-              cpu: 500m
+              memory: 1Gi                        
+              cpu: 500m                          
+
+          # Eksponerede porte
           ports:
             - containerPort: 5672
-              name: amqp
+              name: amqp                        
             - containerPort: 15672
-              name: management
+              name: management                   
+
+          # Mount persistent storage
           volumeMounts:
             - name: rabbitmq-data
-              mountPath: /var/lib/rabbitmq
-          # Readiness probe - checks if RabbitMQ is ready to accept connections
-          readinessProbe:
+              mountPath: /var/lib/rabbitmq       
+
+          # Health checks for RabbitMQ
+          readinessProbe:                        
             exec:
               command:
                 - rabbitmq-diagnostics
@@ -62,8 +73,8 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
             successThreshold: 1
-          # Liveness probe - checks if RabbitMQ process is alive
-          livenessProbe:
+
+          livenessProbe:                         
             exec:
               command:
                 - rabbitmq-diagnostics
@@ -73,12 +84,14 @@ spec:
             timeoutSeconds: 10
             failureThreshold: 3
             successThreshold: 1
-  volumeClaimTemplates:
+
+  # StatefulSet-specifik: Persistent storage templates
+  volumeClaimTemplates:                          
     - metadata:
         name: rabbitmq-data
       spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: longhorn
+        accessModes: ["ReadWriteOnce"]           
+        storageClassName: longhorn               
         resources:
           requests:
-            storage: 1Gi
+            storage: 1Gi                         

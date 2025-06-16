@@ -18,3 +18,5 @@ spec:
       ports:
         - protocol: TCP
           port: 1433
+
+# Tillader udgående trafik til SQL Server pods på port 1433

@@ -1,6 +1,4 @@
-﻿# Allow payment service pods to perform DNS lookups - essential for service discovery
-# Without this, pods cannot resolve service names like "rabbitmq.rabbitmq.svc.cluster.local"
-apiVersion: networking.k8s.io/v1
+﻿apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-dns
@@ -14,9 +12,15 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: kube-system # Target kube-system namespace where DNS runs
+              kubernetes.io/metadata.name: kube-system 
       ports:
         - protocol: UDP
           port: 53    
         - protocol: TCP
           port: 53
+
+# Denne NetworkPolicy tillader pods i payment-service at bruge DNS 
+# -- altså at oversætte navne som "rabbitmq.rabbitmq.svc.cluster.local" til IP-adresser.
+
+# UDP port 53 - for hurtige, små DNS-forespørgsler
+# TCP port 53 - for større DNS-svar eller når UDP ikke virker

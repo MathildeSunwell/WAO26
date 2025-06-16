@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal deployere Delivery Service ressourcerne fra Git til Kubernetes.
+# Den peger på base/services/delivery-service mappen hvor Delivery Service ressourcerne ligger.

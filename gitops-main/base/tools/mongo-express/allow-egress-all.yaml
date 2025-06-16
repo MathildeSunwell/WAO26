@@ -12,3 +12,5 @@ spec:
   
   egress:
     - {}
+
+# Tillader al udgående trafik fra mongo-express pods

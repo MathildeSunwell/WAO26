@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal deployere SQL Server ressourcerne fra Git til Kubernetes.
+# Den peger på base/infrastructure/sqlserver mappen hvor SQL Server ligger

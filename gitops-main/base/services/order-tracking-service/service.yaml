@@ -6,10 +6,14 @@ metadata:
   labels:
     app: order-tracking-service
 spec:
-  type: ClusterIP
+  type: ClusterIP   # Tilgængeligt internt i clusteret
   ports:
     - name: http
       port: 8080
       targetPort: 8080
   selector:
     app: order-tracking-service
+
+# Denne service-fil opretter et internt endpoint for order-tracking systemet. 
+# Den bruger ClusterIP, hvilket betyder at den kun er tilgængelig internt i Kubernetes clusteret.
+# Den lytter på port 8080 og dirigerer trafik til de pods der matcher labelen app: order-tracking-service.

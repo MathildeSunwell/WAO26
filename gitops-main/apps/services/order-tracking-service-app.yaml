@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal deployere Order Tracking Service ressourcerne fra Git til Kubernetes.
+# Den peger på base/services/order-tracking-service mappen hvor Order Tracking Service ressourcerne ligger.

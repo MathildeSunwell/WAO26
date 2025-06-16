@@ -5,80 +5,101 @@ metadata:
   namespace: order-tracking-service
   labels:
     app: order-tracking-service
+
 spec:
-  revisionHistoryLimit: 2
-  replicas: 2
+  revisionHistoryLimit: 2          
+  replicas: 2                      
+
+# Denne Deployment styrer alle pods, der har app=order-tracking-service som label
   selector:
     matchLabels:
       app: order-tracking-service
+
+# Pod template – beskriver hvordan hver pod skal se ud
   template:
     metadata:
       labels:
         app: order-tracking-service
+
+  # Security context for pod
     spec:
-      securityContext:
+      securityContext:             
         runAsNonRoot: true
         runAsUser: 1001
         runAsGroup: 1001
-        fsGroup: 1001
-      imagePullSecrets:
+        fsGroup: 1001              
+
+      imagePullSecrets:            
         - name: gitlab-registry-secret
+
       containers:
         - name: order-tracking-service
           image: registry.gitlab.au.dk/swwao/f2025/exams-projects/group-7/orderservice:v1.10
+
           ports:
             - containerPort: 8080
+
+          # Security context for container
           securityContext:
-            privileged: false
-            allowPrivilegeEscalation: false
+            privileged: false                 
+            allowPrivilegeEscalation: false   
             capabilities:
               drop:
-                - ALL
-          readinessProbe:
+                - ALL              
+
+          readinessProbe:         
             httpGet:
               path: /health/ready
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
             failureThreshold: 3
-          livenessProbe:
+
+          livenessProbe:           
             httpGet:
               path: /health/live
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 20
             failureThreshold: 5
+
+          # Ressourcebegrænsninger for containeren
           resources:
             requests:
-              cpu: "30m"
-              memory: "64Mi"
+              cpu: "30m"          # Minimum CPU pod'en forventer at bruge (30 millicores)
+              memory: "64Mi"      # Minimum RAM den forventer
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "100m"         # Maks CPU (100 millicores)
+              memory: "128Mi"     # Maks RAM
+
           env:
-            # Configuration from ConfigMap
+            # RabbitMq konfiguration hentes fra ConfigMap
             - name: RabbitMq__HostName
               valueFrom:
                 configMapKeyRef:
                   name: order-tracking-service-config
                   key: RabbitMq__HostName
+
             - name: RabbitMq__Port
               valueFrom:
                 configMapKeyRef:
                   name: order-tracking-service-config
                   key: RabbitMq__Port
-                  # Database connection string
+
+            # Database connection string hentes fra Secret
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
                   name: db-secret
                   key: DefaultConnection
-            # Configuration from existing Secrets
+
+            # RabbitMq brugernavn og password hentes fra Secrets
             - name: RabbitMq__UserName
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq-secret
                   key: userName
+
             - name: RabbitMq__Password
               valueFrom:
                 secretKeyRef:

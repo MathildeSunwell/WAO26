@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal køre database-setup jobbet automatisk efter SQL Server er deployeret.
+# Den peger på base/databases/mssql mappen hvor MSSQL initialization Job ligger.

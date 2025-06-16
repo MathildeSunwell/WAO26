@@ -15,3 +15,6 @@ spec:
       targetPort: 15672
   selector:
     app: rabbitmq
+
+# Denne service-fil opretter et internt endpoint for RabbitMQ systemet.
+# Den bruger ClusterIP, hvilket betyder at den kun er tilgængelig internt i Kubernetes clusteret.

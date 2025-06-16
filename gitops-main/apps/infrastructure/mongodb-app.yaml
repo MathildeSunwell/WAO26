@@ -1,18 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mongodb
-  namespace: argocd
+  name: mongodb                           
+  namespace: argocd                       
 spec:
-  project: default
+  project: default                        
   source:
-    repoURL: "https://gitlab.au.dk/swwao/f2025/exams-projects/Group-7/gitops.git"
-    targetRevision: main
-    path: base/infrastructure/mongodb
+    repoURL: "https://gitlab.au.dk/swwao/f2025/exams-projects/Group-7/gitops.git"  
+    targetRevision: main                  
+    path: base/infrastructure/mongodb     
   destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
+    server: https://kubernetes.default.svc  
+    namespace: argocd                     
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: true                         # Fjern ressourcer der ikke længere er i Git
+      selfHeal: true                      # Genopret ressourcer hvis de bliver slettet manuelt
+
+# Denne fil fortæller ArgoCD at den skal deployere MongoDB ressourcerne fra Git til Kubernetes.
+# Den peger på base/infrastructure/mongodb mappen hvor MongoDB ressourcerne ligger.

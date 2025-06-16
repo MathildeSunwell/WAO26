@@ -8,4 +8,6 @@ configMapGenerator:
     files:
       - setup-mssql-db.sql
     options:
-      disableNameSuffixHash: true
+      disableNameSuffixHash: true   
+
+# configMapGenerator tager filen setup-mssql-db.sql og pakker den automatisk ind i en ConfigMap med navnet setup-mssql-db.

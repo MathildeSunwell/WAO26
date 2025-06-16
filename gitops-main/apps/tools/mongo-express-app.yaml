@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal deployere Mongo Express ressourcerne fra Git til Kubernetes.
+# Den peger på base/tools/mongo-express mappen hvor Mongo Express ressourcerne ligger.

@@ -16,3 +16,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# Denne fil fortæller ArgoCD at den skal deployere API Gateway ressourcerne fra Git til Kubernetes.
+# Den peger på base/services/api-gateway mappen hvor API Gateway ressourcerne ligger.

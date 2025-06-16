@@ -16,3 +16,7 @@ spec:
                 name: api-gateway
                 port:
                   number: 8080
+
+# Denne Ingress-fil opretter en offentlig adgang til API Gateway fra internettet.
+# Når nogen skriver https://swwao-courses.orbit.au.dk/grp-7/api i deres browser,
+# dirigerer nginx dem til API Gateway servicen på port 8080.
