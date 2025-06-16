@@ -1,77 +1,94 @@
+# DOCKER COMPOSE FILE - Complete local development environment
+# This file defines multiple services that work together as one application
+# Start everything with: docker-compose up -d
+# Stop everything with: docker-compose down
+
 services:
+  # ===== MONGODB DATABASE SERVICE =====
   mongodb:
-    image: mongo:8.0.9
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: admin
+    image: mongo:8.0.9                    
+    restart: unless-stopped               # Auto-restart container if it crashes (but not if manually stopped)
+    environment:                          # Environment variables passed to container
+      MONGO_INITDB_ROOT_USERNAME: root    
+      MONGO_INITDB_ROOT_PASSWORD: admin   
     ports:
-      - "27017:27017"
+      - "27017:27017"                     # Port mapping: host:container (MongoDB default port)
     volumes:
-      - mongo_data:/data/db
+      - mongo_data:/data/db               # Named volume - Docker manages storage location
+                                          # Persists MongoDB data even if container is deleted
 
+  # ===== MONGODB WEB ADMIN INTERFACE =====
   mongo-express:
-    image: mongo-express:1.0.2-20-alpine3.19
+    image: mongo-express:1.0.2-20-alpine3.19  
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
-      ME_CONFIG_MONGODB_URL: mongodb://root:admin@mongodb:27017/
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root         
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin        
+      ME_CONFIG_MONGODB_URL: mongodb://root:admin@mongodb:27017/  
+      ME_CONFIG_BASICAUTH_USERNAME: admin           
+      ME_CONFIG_BASICAUTH_PASSWORD: admin          
     ports:
-      - "8081:8081"
+      - "8081:8081"                       # Access web interface at localhost:8081
     volumes:
-      - mongo_data:/data/db
+      - mongo_data:/data/db               
 
+  # ===== SQL SERVER DATABASE SERVICE =====
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    image: mcr.microsoft.com/mssql/server:2019-latest  
     restart: unless-stopped
     environment:
-      ACCEPT_EULA: Y
-      SA_USER: sa
-      MSSQL_SA_PASSWORD: "Admin1234!"
+      ACCEPT_EULA: Y                      # Accept End User License Agreement (required)
+      SA_USER: sa                         
+      MSSQL_SA_PASSWORD: "Admin1234!"     
     ports:
-      - "1433:1433"
+      - "1433:1433"                       # SQL Server default port
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - sqlserver_data:/var/opt/mssql     # Named volume for SQL Server data files
 
+  # ===== SQL SERVER WEB QUERY TOOL =====
   sqlpad:
-    image: sqlpad/sqlpad:latest
+    image: sqlpad/sqlpad:latest           # Web-based SQL query interface
     restart: unless-stopped
-    depends_on:
+    depends_on:                           # This service waits for sqlserver to start first
       - sqlserver
     environment:
-      # UI login
-      SQLPAD_ADMIN: admin
-      SQLPAD_ADMIN_PASSWORD: admin
-      # Pre-configured SQL Server connection
-      SQLPAD_CONNECTIONS__0__name: "SQLServer"
-      SQLPAD_CONNECTIONS__0__driver: sqlserver
-      SQLPAD_CONNECTIONS__0__host: sqlserver
-      SQLPAD_CONNECTIONS__0__port: 1433
-      SQLPAD_CONNECTIONS__0__database: master
-      SQLPAD_CONNECTIONS__0__username: sa
-      SQLPAD_CONNECTIONS__0__password: "Admin1234!"
+      # Web UI authentication
+      SQLPAD_ADMIN: admin                 
+      SQLPAD_ADMIN_PASSWORD: admin        
+      
+      # Pre-configured database connection 
+      SQLPAD_CONNECTIONS__0__name: "SQLServer"           
+      SQLPAD_CONNECTIONS__0__driver: sqlserver           
+      SQLPAD_CONNECTIONS__0__host: sqlserver             
+      SQLPAD_CONNECTIONS__0__port: 1433                  
+      SQLPAD_CONNECTIONS__0__database: master            
+      SQLPAD_CONNECTIONS__0__username: sa                
+      SQLPAD_CONNECTIONS__0__password: "Admin1234!"      
     ports:
-      - "4000:3000"
+      - "4000:3000"                       # Access at localhost:4000 (maps to container port 3000)
     volumes:
-      - sqlpad_data:/var/lib/sqlpad
+      - sqlpad_data:/var/lib/sqlpad       # Persists SQLPad configuration and query history
 
+  # ===== RABBITMQ MESSAGE BROKER SERVICE =====
   rabbitmq:
-    image: rabbitmq:3.12-management-alpine
+    image: rabbitmq:3.12-management-alpine    
     restart: unless-stopped
     volumes:
-      - ./definitions.json:/etc/rabbitmq/definitions.json:ro
-      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      # Bind mounts - files from host machine mapped into container
+      - ./definitions.json:/etc/rabbitmq/definitions.json:ro     # Pre-configure queues/exchanges (:ro = read-only)
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro           # RabbitMQ configuration file (:ro = read-only)
     ports:
-      - "5672:5672" # AMQP
-      - "25672:15672" # management UI. Different from default to avoid conflict browser auth caching from cluster
+      - "5672:5672"                       # AMQP protocol port (for applications to connect)
+      - "25672:15672"                     # Management UI port (changed from default 15672 to avoid browser caching issues)
 
+# ===== NAMED VOLUMES SECTION =====
+# These are Docker-managed storage areas that persist data
 volumes:
-  mongo_data:
-  sqlserver_data:
-  sqlpad_data:
+  mongo_data:        
+  sqlserver_data:      
+  sqlpad_data:       # Stores SQLPad configuration and queries
 
+# ===== NETWORK CONFIGURATION =====
 networks:
-  default:
-    name: local-dev-net
+  default:           # All services will be on this network
+    name: local-dev-net    
+                           

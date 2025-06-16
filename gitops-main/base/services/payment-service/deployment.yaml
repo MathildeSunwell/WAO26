@@ -1,84 +1,100 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: apps/v1  
+kind: Deployment     
 metadata:
-  name: payment-service
-  namespace: payment-service
+  name: payment-service            
+  namespace: payment-service       
   labels:
-    app: payment-service
+    app: payment-service            
+
 spec:
-  revisionHistoryLimit: 2
-  replicas: 2
-  selector:
+  revisionHistoryLimit: 2          # Angiver hvor mange gamle versioner der skal gemmes
+  replicas: 2                      # Angiver hvor mange pods der skal køre samtidigt
+
+  selector:                        # Denne Deployment styrer alle pods, der har app=payment-service som label
     matchLabels:
       app: payment-service
-  template:
+
+  template:                        # Pod template – beskriver hvordan hver pod skal se ud
     metadata:
       labels:
-        app: payment-service
+        app: payment-service       
+
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1001
-        runAsGroup: 1001
-        fsGroup: 1001
-      imagePullSecrets:
+      securityContext:             # Sikkerhed for hele pod’en
+        runAsNonRoot: true         
+        runAsUser: 1001            
+        runAsGroup: 1001           
+        fsGroup: 1001              # Angiver hvilken gruppe der ejer filsystemet i pod’en
+
+      imagePullSecrets:            # Angiver hvorfra containerbilleder skal hentes
         - name: gitlab-registry-secret
+
       containers:
         - name: payment-service
           image: registry.gitlab.au.dk/swwao/f2025/exams-projects/group-7/paymentservice:v1.16
+
           ports:
-            - containerPort: 8080
-          securityContext:
-            privileged: false
-            allowPrivilegeEscalation: false
+            - containerPort: 8080  
+
+          securityContext:                    
+            privileged: false                 # Containeren kører ikke i privileged mode
+            allowPrivilegeEscalation: false   # Forhindrer containeren i at opnå højere rettigheder
             capabilities:
               drop:
-                - ALL
-          readinessProbe:
+                - ALL              # Fjerner alle ekstra rettigheder fra containeren
+
+          readinessProbe:          # Tjekker om appen (den .NET-applikation der kører inde i containeren) er klar til at modtage trafik
             httpGet:
               path: /health/ready
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
             failureThreshold: 3
-          livenessProbe:
+
+          livenessProbe:           # Tjekker om appen stadig lever
             httpGet:
               path: /health/live
               port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 20
-            failureThreshold: 5
-          resources:
+            initialDelaySeconds: 15   
+            periodSeconds: 20         
+            failureThreshold: 5       
+
+          resources:              # Ressourcebegrænsninger for containeren
             requests:
-              cpu: "30m"
-              memory: "64Mi"
+              cpu: "30m"          # Minimum CPU pod’en forventer at bruge (30 millicores)
+              memory: "64Mi"      # Minimum RAM den forventer
             limits:
-              cpu: "100m"
-              memory: "128Mi"
-          env:
-            # Configuration from ConfigMap
+              cpu: "100m"         # Maks CPU (100 millicores)
+              memory: "128Mi"     # Maks RAM
+
+          env:                    
+            # RabbitMq konfiguration hentes fra ConfigMap
             - name: RabbitMq__HostName
               valueFrom:
                 configMapKeyRef:
                   name: payment-service-config
                   key: RabbitMq__HostName
+
             - name: RabbitMq__Port
               valueFrom:
                 configMapKeyRef:
                   name: payment-service-config
                   key: RabbitMq__Port
-            # Configuration from existing Secrets
+
+            # RabbitMq brugernavn og password hentes fra Secrets
             - name: RabbitMq__UserName
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq-secret
                   key: userName
+
             - name: RabbitMq__Password
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq-secret
                   key: password
-            # Database connection string
+
+            # Database connection string hentes fra Secret
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:

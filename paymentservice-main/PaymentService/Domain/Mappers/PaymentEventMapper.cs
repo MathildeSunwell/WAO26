@@ -39,7 +39,7 @@ public static class PaymentEventMapper
             Reason: reason
         );
     }
-    
+
     // Creates an envelope for a PaymentReservedPayload
     public static EventEnvelope<PaymentReservedPayload> ToReservedEventEnvelope(this Payment payment)
     {
@@ -88,3 +88,23 @@ public static class PaymentEventMapper
         };
     }
 }
+
+
+/*
+    PaymentEventMapper is a static utility class that converts domain models (Payment)
+    into message payloads and envelopes used for RabbitMQ messaging.
+
+    It serves two main purposes:
+    1. Maps a Payment object to a specific payload type:
+       - e.g., PaymentReservedPayload, PaymentFailedPayload, etc.
+       - Includes optional reasons for failures or cancellations.
+
+    2. Wraps those payloads in EventEnvelope<T> objects:
+       - Adds metadata like MessageId, EventType, and Timestamp.
+       - Ready to be published to RabbitMQ via a publisher service.
+
+    This separation of concerns:
+    - Keeps transformation logic out of services and controllers
+    - Ensures consistent message structure and formatting
+    - Makes the system easier to test, read, and maintain
+*/

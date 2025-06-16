@@ -1,61 +1,91 @@
+# GITLAB CI/CD PIPELINE - Payment Service
+# This pipeline automates the build, containerization, and deployment process
+# Triggered by code commits and Git tags
+
+# Global Docker image for jobs that don't specify their own image
 image: mcr.microsoft.com/dotnet/sdk:8.0
 
+# Pipeline stages - executed in order
 stages:
-  - build
-  - build-image
-  - deployment
+  - build          # Stage 1: Compile and test the application
+  - build-image    # Stage 2: Create Docker image (only on Git tags)
+  - deployment     # Stage 3: Deploy to Kubernetes via GitOps (only on Git tags)
 
+# Global variables available to all pipeline jobs
 variables:
-  PROJECT_PATH: PaymentService
+  PROJECT_PATH: PaymentService    
 
+# ===== STAGE 1: BUILD =====
+# Compiles the .NET application and runs tests
 build:
-  stage: build
+  stage: build                    
   script:
     - echo "Building the project..."
-    - cd $PROJECT_PATH
-    - dotnet restore
-    - dotnet build --no-restore
-  rules:
-    - if: '$CI_COMMIT_TAG'
-      when: never
-    - when: always
+    - cd $PROJECT_PATH            
+    - dotnet restore              
+    - dotnet build --no-restore   # Compile the project (skip restore since we just did it)
+  rules:                          # Controls when this job runs
+    - if: '$CI_COMMIT_TAG'        # If this is a tag push...
+      when: never                 # ...never run this job (tags skip build, go straight to image creation)
+    - when: always                # For all other commits (branches), always run this job
 
+# ===== STAGE 2: BUILD-IMAGE =====
+# Creates and pushes Docker image to GitLab Container Registry
 build-image:
-  image: docker:latest
-  stage: build-image
+  image: docker:latest            
+  stage: build-image              
   services:
-    - docker:dind
+    - docker:dind                 # Docker-in-Docker service (allows running Docker commands inside container)
   before_script:
     - echo "Setting up Docker..."
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY  # Login to GitLab Container Registry
   script:
     - echo "Building and pushing Docker image..."
-    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker pull $CI_REGISTRY_IMAGE:latest || true              # Try to pull latest image for caching (|| true = don't fail if it doesn't exist)
     - docker build --cache-from $CI_REGISTRY_IMAGE:latest -f $PROJECT_PATH/Dockerfile -t $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG -t $CI_REGISTRY_IMAGE:latest $PROJECT_PATH
-    - docker push --all-tags $CI_REGISTRY_IMAGE
+      # Build Docker image:
+      # --cache-from: Use layers from latest image to speed up build
+      # -f: Specify Dockerfile location
+      # -t: Tag the image with both the Git tag and 'latest'
+      # Last argument: Build context (PaymentService directory)
+    - docker push --all-tags $CI_REGISTRY_IMAGE                  # Push both tag and latest to registry
   rules:
-    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_TAG'        # Only run this job when a Git tag is pushed (e.g., v1.0.0)
 
+# ===== STAGE 3: DEPLOYMENT =====
+# Updates Kubernetes deployment via GitOps pattern
 deployment:
-  stage: deployment
-  image: bitnami/git:latest
+  stage: deployment               
+  image: bitnami/git:latest       
   before_script:
     - echo "Configuring Git..."
-    - git config --global user.email "ci@example.com"
-    - git config --global user.name "GitLab CI"
-    - echo "Installing yq..."
-    - apt-get update && apt-get install -y curl
-    - curl -L https://github.com/mikefarah/yq/releases/download/v4.33.1/yq_linux_amd64 -o /usr/bin/yq
-    - chmod +x /usr/bin/yq
+    - git config --global user.email "ci@example.com"     
+    - git config --global user.name "GitLab CI"           
+    - echo "Installing yq..."                             # yq is a YAML processor (like jq for JSON)
+    - apt-get update && apt-get install -y curl           # Install curl to download yq
+    - curl -L https://github.com/mikefarah/yq/releases/download/v4.33.1/yq_linux_amd64 -o /usr/bin/yq  # Download yq binary
+    - chmod +x /usr/bin/yq                                # Make yq executable
   script:
     - echo "Deploying to GitOps repository..."
+    # Clone the GitOps repository (separate repo containing Kubernetes manifests)
     - git clone https://$GITOPS_USERNAME:$GITOPS_PASSWORD@gitlab.au.dk/swwao/f2025/exams-projects/Group-7/gitops.git
-    - cd gitops/base/services/payment-service
+    - cd gitops/base/services/payment-service             
     - echo "Updating deployment.yaml image tag to $CI_COMMIT_TAG..."
+    # Use yq to update the Docker image tag in the Kubernetes deployment.yaml
+    # This changes the image from old tag to the new $CI_COMMIT_TAG
     - yq e -i '.spec.template.spec.containers[0].image = "registry.gitlab.au.dk/swwao/f2025/exams-projects/group-7/paymentservice:'"$CI_COMMIT_TAG"'"' deployment.yaml
-    - git add deployment.yaml
-    - git commit -m "Update image to $CI_COMMIT_TAG"
-    - git push origin main
+    - git add deployment.yaml                             
+    - git commit -m "Update image to $CI_COMMIT_TAG"      
+    - git push origin main                                
   rules:
-    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_TAG'        # Only run this job when a Git tag is pushed
 
+# ===== HOW TO TRIGGER THE PIPELINE =====
+# 1. Normal commit: Only 'build' stage runs (compiles and tests)
+# 2. Git tag push (e.g., git tag v1.0.0 && git push origin v1.0.0):
+#    - 'build' stage is SKIPPED
+#    - 'build-image' stage runs (creates Docker image)
+#    - 'deployment' stage runs (updates Kubernetes via GitOps)
+#
+# This implements GitOps pattern:
+# Code Repo (this file) → Docker Registry → GitOps Repo → ArgoCD → Kubernetes

@@ -20,21 +20,24 @@ public class RabbitMqPaymentEventPublisher : IPaymentEventPublisher
 
     public async Task PublishPaymentReservedAsync(PaymentReservedPayload paymentEvent, Guid correlationId)
     {
+
+        // Create an envelope for the payment event
         var envelope = new EventEnvelope<PaymentReservedPayload>
         {
             MessageId = Guid.NewGuid(),
-            EventType = OrderEventType.PaymentReserved,
+            EventType = OrderEventType.PaymentReserved,     // Set the event type enum
             Timestamp = DateTime.UtcNow,
-            Payload = paymentEvent
+            Payload = paymentEvent                          // Set the payload to the payment event  
         };
 
-        _logger.LogInformation("Publishing PaymentReserved event for OrderId: {OrderId} with Event: {Event}", 
+        _logger.LogInformation("Publishing PaymentReserved event for OrderId: {OrderId} with Event: {Event}",
             paymentEvent.OrderId, JsonSerializer.Serialize(envelope, _jsonOptions));
 
+        // Publish the event to the RabbitMQ exchange with routing key
         await _publisher.PublishAsync(
-            RabbitMqTopology.EventExchange, 
-            RabbitMqTopology.PaymentReservedKey, 
-            correlationId, 
+            RabbitMqTopology.EventExchange,                 // Use the main event exchange (events.topic)
+            RabbitMqTopology.PaymentReservedKey,            // Use the routing key for payment reserved events (payment.reserved)
+            correlationId,
             envelope);
     }
 
@@ -48,13 +51,13 @@ public class RabbitMqPaymentEventPublisher : IPaymentEventPublisher
             Payload = paymentEvent
         };
 
-        _logger.LogInformation("Publishing PaymentFailed event for OrderId: {OrderId} with Event: {Event}", 
+        _logger.LogInformation("Publishing PaymentFailed event for OrderId: {OrderId} with Event: {Event}",
             paymentEvent.OrderId, JsonSerializer.Serialize(envelope, _jsonOptions));
 
         await _publisher.PublishAsync(
-            RabbitMqTopology.EventExchange, 
-            RabbitMqTopology.PaymentFailedKey, 
-            correlationId, 
+            RabbitMqTopology.EventExchange,
+            RabbitMqTopology.PaymentFailedKey,
+            correlationId,
             envelope);
     }
 
@@ -68,13 +71,13 @@ public class RabbitMqPaymentEventPublisher : IPaymentEventPublisher
             Payload = paymentEvent
         };
 
-        _logger.LogInformation("Publishing PaymentSucceeded event for OrderId: {OrderId} with Event: {Event}", 
+        _logger.LogInformation("Publishing PaymentSucceeded event for OrderId: {OrderId} with Event: {Event}",
             paymentEvent.OrderId, JsonSerializer.Serialize(envelope, _jsonOptions));
 
         await _publisher.PublishAsync(
-            RabbitMqTopology.EventExchange, 
-            RabbitMqTopology.PaymentSucceededKey, 
-            correlationId, 
+            RabbitMqTopology.EventExchange,
+            RabbitMqTopology.PaymentSucceededKey,
+            correlationId,
             envelope);
     }
 
@@ -88,13 +91,30 @@ public class RabbitMqPaymentEventPublisher : IPaymentEventPublisher
             Payload = paymentEvent
         };
 
-        _logger.LogInformation("Publishing PaymentCancelled event for OrderId: {OrderId} with Event: {Event}", 
+        _logger.LogInformation("Publishing PaymentCancelled event for OrderId: {OrderId} with Event: {Event}",
             paymentEvent.OrderId, JsonSerializer.Serialize(envelope, _jsonOptions));
 
         await _publisher.PublishAsync(
-            RabbitMqTopology.EventExchange, 
-            RabbitMqTopology.PaymentCancelledKey, 
-            correlationId, 
+            RabbitMqTopology.EventExchange,
+            RabbitMqTopology.PaymentCancelledKey,
+            correlationId,
             envelope);
     }
 }
+
+
+/*
+    RabbitMqPaymentEventPublisher is responsible for publishing domain events related to payment outcomes.
+
+    It wraps each event (e.g., PaymentReserved, PaymentFailed) in a EventEnvelope,
+    including metadata such as message ID, timestamp, event type, and the original payload.
+
+    It then sends the event to RabbitMQ using a predefined exchange and routing key
+    by delegating the actual publishing to the injected IMessagePublisher.
+
+    The class also logs each publishing operation with the order ID and full event content for observability.
+
+    This approach ensures all outgoing events follow a consistent structure, support correlation/tracing,
+    and can be routed properly through RabbitMQ for consumption by other services.
+*/
+
